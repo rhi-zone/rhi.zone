@@ -20,3 +20,8 @@ docs/.vitepress/dist/
 .idea/
 .vscode/
 *.swp
+
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
