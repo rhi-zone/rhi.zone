@@ -10,6 +10,9 @@ node_modules/
 docs/.vitepress/cache/
 docs/.vitepress/dist/
 
+# Cloudflare
+.wrangler/
+
 # Secrets
 .envrc.local
 
