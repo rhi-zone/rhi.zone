@@ -12,6 +12,8 @@ The result is something that looks embarrassingly small next to sophisticated wo
 
 - **[Starter CLAUDE.md](starter-claude-md.md)** — a general-purpose template. Copy it, delete what doesn't apply, add what you learn.
 - **[Post-history injection](hooks.md)** — contextual hints that land *after* conversation history, not before it.
+- **[Multi-repo orchestration](multi-repo.md)** — dirty-repo checks, TODO.md deferral, docs-sync checklists.
+- **[Unattended automation](unattended.md)** — headless sessions, concurrency guards, pre-checks, nonce lifecycle.
 
 ---
 
@@ -34,5 +36,5 @@ Or reference a page in your CLAUDE.md to let Claude navigate here when needed:
 
 ## Full guide
 
-The extended guide with more patterns (session length, retry spirals, cost, usage instrumentation) lives at:
+The extended guide with more patterns (session length, retry spirals, cost, usage instrumentation, multi-repo orchestration, unattended agents) lives at:
 **https://docs.rhi.zone/claude-code-guide**
