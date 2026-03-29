@@ -46,17 +46,6 @@ claude -p --dangerously-skip-permissions \
 
 The end script can verify no new activity arrived before allowing exit — a clean-shutdown handshake.
 
-## Self-scheduled tasks
-
-Extend the pre-check to idle-time work. When there's no external activity, roll dice on a task list before deciding to skip entirely:
-
-```json
-{ "id": "explore-web", "weight": 2, "cooldownHours": 24, "maxPerDay": 1,
-  "prompt": "find something you haven't seen before..." }
-```
-
-Return a task or `no-task`. Spawn a focused session for the task, or exit cleanly. Keeps idle cost near zero while leaving room for self-directed work.
-
 ## Observability
 
 Claude Code writes every session turn to `.jsonl` files under `~/.claude/projects/`. For unattended agents, these are the ground truth — read them directly to monitor what's happening without instrumenting the agent itself.
