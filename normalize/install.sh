@@ -18,7 +18,11 @@ case "$OS" in
             x86_64)
                 # NixOS and other non-standard glibc environments lack the dynamic linker
                 # at the conventional path. Fall back to the musl static binary.
-                if [ -f /etc/NIXOS ] || ! [ -e /lib64/ld-linux-x86-64.so.2 ]; then
+                if [ -f /etc/NIXOS ]; then
+                    echo "NixOS detected — using static musl build."
+                    TARGET="x86_64-unknown-linux-musl"
+                elif ! [ -e /lib64/ld-linux-x86-64.so.2 ]; then
+                    echo "glibc dynamic linker not found — using static musl build."
                     TARGET="x86_64-unknown-linux-musl"
                 else
                     TARGET="x86_64-unknown-linux-gnu"
