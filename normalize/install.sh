@@ -7,6 +7,9 @@ set -e
 
 REPO="rhi-zone/normalize"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
+# Musl artifacts ship a wrapper + runtime/ bundle; install under LIBEXEC_DIR
+# and symlink into INSTALL_DIR so the wrapper can find its sibling runtime/.
+LIBEXEC_DIR="${LIBEXEC_DIR:-$HOME/.local/share/normalize}"
 
 # Detect platform
 OS="$(uname -s)"
@@ -16,16 +19,14 @@ case "$OS" in
     Linux)
         case "$ARCH" in
             x86_64)
-                # NixOS and other non-standard glibc environments lack the dynamic linker
-                # at the conventional path. Fall back to the musl static binary.
-                if [ -f /etc/NIXOS ]; then
-                    echo "NixOS detected — using static musl build."
-                    TARGET="x86_64-unknown-linux-musl"
-                elif ! [ -e /lib64/ld-linux-x86-64.so.2 ]; then
-                    echo "glibc dynamic linker not found — using static musl build."
-                    TARGET="x86_64-unknown-linux-musl"
-                else
+                # The musl artifact is fully self-contained (wrapper + bundled
+                # ld-musl loader + libc + libgcc_s from Alpine). It works on
+                # NixOS and any non-FHS distro without system musl installed.
+                # Prefer gnu only when the glibc dynamic linker is present.
+                if [ -e /lib64/ld-linux-x86-64.so.2 ] && [ ! -f /etc/NIXOS ]; then
                     TARGET="x86_64-unknown-linux-gnu"
+                else
+                    TARGET="x86_64-unknown-linux-musl"
                 fi
                 ;;
             aarch64|arm64) TARGET="aarch64-unknown-linux-gnu" ;;
@@ -116,13 +117,31 @@ if [ -z "$SKIP_INSTALL" ]; then
     # Extract and install
     tar xz -C "$TMPWORK" -f "$TMPWORK/normalize.tar.gz"
     mkdir -p "$INSTALL_DIR"
-    if [ -w "$INSTALL_DIR" ]; then
-        mv "$TMPWORK/normalize" "$INSTALL_DIR/normalize"
+
+    # Musl artifacts ship wrapper + runtime/ bundle; install the whole layout
+    # under LIBEXEC_DIR and symlink into INSTALL_DIR. The wrapper resolves its
+    # real path at runtime to find the sibling runtime/ directory.
+    if [ -d "$TMPWORK/runtime" ] && [ -f "$TMPWORK/normalize" ]; then
+        rm -rf "$LIBEXEC_DIR/runtime" "$LIBEXEC_DIR/normalize"
+        mkdir -p "$LIBEXEC_DIR"
+        mv "$TMPWORK/runtime" "$LIBEXEC_DIR/runtime"
+        mv "$TMPWORK/normalize" "$LIBEXEC_DIR/normalize"
+        chmod +x "$LIBEXEC_DIR/normalize"
+        chmod +x "$LIBEXEC_DIR/runtime/ld-musl-x86_64.so.1" 2>/dev/null || true
+        if [ -w "$INSTALL_DIR" ]; then
+            ln -sf "$LIBEXEC_DIR/normalize" "$INSTALL_DIR/normalize"
+        else
+            sudo ln -sf "$LIBEXEC_DIR/normalize" "$INSTALL_DIR/normalize"
+        fi
     else
-        echo "Installing to $INSTALL_DIR (requires sudo)..."
-        sudo mv "$TMPWORK/normalize" "$INSTALL_DIR/normalize"
+        if [ -w "$INSTALL_DIR" ]; then
+            mv "$TMPWORK/normalize" "$INSTALL_DIR/normalize"
+        else
+            echo "Installing to $INSTALL_DIR (requires sudo)..."
+            sudo mv "$TMPWORK/normalize" "$INSTALL_DIR/normalize"
+        fi
+        chmod +x "$INSTALL_DIR/normalize"
     fi
-    chmod +x "$INSTALL_DIR/normalize"
 fi
 
 if [ -z "$SKIP_INSTALL" ]; then
